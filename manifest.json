@@ -1,0 +1,17 @@
+{
+  "name": "Pampio Campo - Proyectos",
+  "short_name": "Pampio Campo",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#d4a316",
+  "theme-color": "#d4a316",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
