@@ -76,8 +76,8 @@
     </style>
     <style>
   .btn-instalar-pwa {
-    display: none; /* Se mantiene oculto por defecto, solo se muestra si el navegador es compatible */
-    background-color: #25d366; /* Color verde llamativo, puedes cambiarlo */
+    display: none; /* Se activa por JavaScript */
+    background-color: #25d366; 
     color: white;
     border: none;
     padding: 12px 24px;
@@ -91,61 +91,61 @@
     justify-content: center;
     margin: 15px auto;
   }
-
-  .btn-instalar-pwa:hover {
-    background-color: #128c7e;
-    transform: scale(1.02);
-  }
-
-  .btn-instalar-pwa svg {
-    margin-right: 8px;
-    fill: white;
-  }
+  .btn-instalar-pwa:hover { background-color: #128c7e; transform: scale(1.02); }
+  .btn-instalar-pwa svg { margin-right: 8px; fill: white; }
 </style>
 
-<!-- Estructura HTML del Botón -->
 <button id="btnInstalarPWA" class="btn-instalar-pwa">
-  <!-- Icono de descarga/teléfono (opcional) -->
   <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px">
     <path d="M480-320 280-520l56-58 104 104v-326h80v326l104-104 56 58-200 200ZM240-160q-33 0-56.5-23.5T160-240v-120h80v120h480v-120h80v120q0 33-23.5 56.5T720-160H240Z"/>
   </svg>
   Instalar en mi teléfono
 </button>
 
-<!-- Lógica de JavaScript para activar la instalación -->
 <script>
-  let eventoInstalacion;
-  const botonInstalar = document.getElementById('btnInstalarPWA');
+  let deferredPrompt;
+  const targetBtn = document.getElementById('btnInstalarPWA');
 
-  // Escuchar el evento que lanza el navegador cuando la PWA está lista para instalar
+  // 1. Forzar que el botón sea visible en móviles si ya pasó la carga inicial
+  if (window.matchMedia('(display-mode: browser)').matches) {
+    targetBtn.style.display = 'inline-flex';
+  }
+
+  // 2. Capturar el evento del navegador
   window.addEventListener('beforeinstallprompt', (e) => {
-    // Evitar que el navegador muestre su propio banner automático por defecto
     e.preventDefault();
-    // Guardar el evento para usarlo cuando el usuario haga clic
-    eventoInstalacion = e;
-    // Hacer visible nuestro botón personalizado
-    botonInstalar.style.display = 'inline-flex';
+    deferredPrompt = e;
+    targetBtn.style.display = 'inline-flex';
   });
 
-  // Programar la acción al hacer clic en el botón
-  botonInstalar.addEventListener('click', async () => {
-    if (eventoInstalacion) {
-      // Mostrar el prompt nativo de instalación
-      eventoInstalacion.prompt();
-      // Esperar a ver si el usuario aceptó o rechazó la instalación
-      const { outcome } = await eventoInstalacion.userChoice;
-      console.log(`El usuario eligió: ${outcome}`);
-      // Limpiar la variable ya que el prompt solo se puede usar una vez
-      eventoInstalacion = null;
-      // Ocultar el botón de nuevo
-      botonInstalar.style.display = 'none';
+  // 3. Acción al presionar el botón
+  targetBtn.addEventListener('click', async () => {
+    // Intento A: Usar el evento capturado por el navegador
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      console.log(`User response: ${outcome}`);
+      deferredPrompt = null;
+      targetBtn.style.display = 'none';
+    } else {
+      // Intento B (Respaldo): Si el navegador oculta el prompt, intentamos usar la API moderna de instalación
+      try {
+        if ('beforeinstallprompt' in window) {
+          alert("Por favor, si no se abre el menú automáticamente, toca los 3 puntos de Chrome arriba a la derecha y selecciona 'Instalar aplicación' o 'Agregar a la pantalla de inicio'.");
+        } else {
+          // Alerta guía para navegadores que bloquean prompts personalizados (como Safari en iOS)
+          alert("Para instalar: Toca el botón 'Compartir' de tu navegador y luego selecciona 'Agregar a la pantalla de inicio'.");
+        }
+      } catch (err) {
+        console.error("Error al intentar instalar:", err);
+      }
     }
   });
 
-  // Ocultar el botón si la aplicación ya se ha instalado con éxito
+  // Ocultar si ya se instaló
   window.addEventListener('appinstalled', () => {
-    console.log('¡PWA instalada con éxito!');
-    botonInstalar.style.display = 'none';
+    targetBtn.style.display = 'none';
+    deferredPrompt = null;
   });
 </script>
 </head>
